@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noEmit": true,
+    "paths": {
+      "@rhythm-plugin/types": ["../types/src/index.ts"],
+      "@rhythm-plugin/canvas-parser": ["../canvas-parser/src/index.ts"],
+      "@rhythm-plugin/md-parser": ["../md-parser/src/index.ts"],
+      "@rhythm-plugin/github-client": ["../github-client/src/index.ts"]
+    }
+  },
+  "references": [
+    { "path": "../types" },
+    { "path": "../canvas-parser" },
+    { "path": "../md-parser" },
+    { "path": "../github-client" }
+  ],
+  "include": ["src"]
+}

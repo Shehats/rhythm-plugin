@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+packages/*/dist/
+packages/*/tsconfig.tsbuildinfo
+
+# Obsidian plugin data (contains secrets)
+data.json
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
