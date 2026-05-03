@@ -1,0 +1,14 @@
+{
+  "repos": [
+    {
+      "repo": "octocat/hello-world",
+      "pat": "ghp_your_personal_access_token_here",
+      "defaultLabels": ["imported"]
+    },
+    {
+      "repo": "myorg/backend-api",
+      "pat": "ghp_another_token_for_this_repo",
+      "defaultLabels": ["backlog", "needs-triage"]
+    }
+  ]
+}

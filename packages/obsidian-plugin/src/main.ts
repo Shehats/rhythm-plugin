@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile } from "obsidian";
-import type { PluginSettings } from "@rhythm-plugin/types";
+import type { PluginSettings, RepoEntry } from "@rhythm-plugin/types";
 import { DEFAULT_SETTINGS } from "@rhythm-plugin/types";
 import { parseCanvas } from "@rhythm-plugin/canvas-parser";
 import { parseMarkdown } from "@rhythm-plugin/md-parser";
@@ -8,6 +8,7 @@ import { RhythmSettingTab } from "./settings.js";
 import { registerCommands } from "./commands.js";
 import { registerFileMenu } from "./file-menu.js";
 import { IssuePreviewModal } from "./preview-modal.js";
+import { RepoPickerModal } from "./repo-picker-modal.js";
 import { detectFileType, readObsidianFile } from "./file-reader.js";
 
 export default class RhythmPlugin extends Plugin {
@@ -21,7 +22,19 @@ export default class RhythmPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+    // Migrate from single-repo format
+    if (saved && "githubPat" in saved && saved.githubPat && this.settings.repos.length === 0) {
+      this.settings.repos = [
+        {
+          repo: `${saved.repoOwner}/${saved.repoName}`,
+          pat: saved.githubPat,
+          defaultLabels: saved.defaultLabels ?? [],
+        },
+      ];
+      await this.saveSettings();
+    }
   }
 
   async saveSettings(): Promise<void> {
@@ -29,12 +42,10 @@ export default class RhythmPlugin extends Plugin {
   }
 
   async processFile(file: TFile): Promise<void> {
-    const { githubPat, repoOwner, repoName } = this.settings;
+    const { repos } = this.settings;
 
-    if (!githubPat || !repoOwner || !repoName) {
-      new Notice(
-        "Rhythm Plugin: configure your GitHub PAT, owner, and repo name in Settings first.",
-      );
+    if (repos.length === 0) {
+      new Notice("Rhythm Plugin: add at least one repository in Settings.");
       return;
     }
 
@@ -59,11 +70,25 @@ export default class RhythmPlugin extends Plugin {
       return;
     }
 
-    const client = GitHubClient.fromPat(githubPat);
-    const defaultLabels = this.settings.defaultLabels;
+    if (repos.length === 1) {
+      this.openPreviewModal(repos[0], file, parsed.candidates);
+    } else {
+      new RepoPickerModal(this.app, repos, (entry) => {
+        this.openPreviewModal(entry, file, parsed.candidates);
+      }).open();
+    }
+  }
 
-    new IssuePreviewModal(this.app, parsed.candidates, (selected) =>
-      client.createIssues(repoOwner, repoName, selected, defaultLabels),
+  private openPreviewModal(
+    entry: RepoEntry,
+    _file: TFile,
+    candidates: ReturnType<typeof parseCanvas>["candidates"],
+  ): void {
+    const [owner, repo] = entry.repo.split("/");
+    const client = GitHubClient.fromPat(entry.pat);
+
+    new IssuePreviewModal(this.app, candidates, (selected) =>
+      client.createIssues(owner, repo, selected, entry.defaultLabels),
     ).open();
   }
 }

@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import type { RepoEntry } from "@rhythm-plugin/types";
 import type RhythmPlugin from "./main.js";
 
 export class RhythmSettingTab extends PluginSettingTab {
@@ -9,63 +10,102 @@ export class RhythmSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Rhythm Plugin Settings" });
+    containerEl.createEl("h2", { text: "Rhythm Plugin — Repositories" });
+    containerEl.createEl("p", {
+      text: 'Each entry maps a GitHub repo ("owner/repo") to its Personal Access Token.',
+      cls: "setting-item-description",
+    });
 
-    new Setting(containerEl)
-      .setName("GitHub Personal Access Token")
-      .setDesc("Token with repo scope to create issues.")
+    const listEl = containerEl.createDiv();
+    this.renderList(listEl);
+
+    new Setting(containerEl).addButton((btn) =>
+      btn
+        .setButtonText("+ Add Repository")
+        .setCta()
+        .onClick(async () => {
+          this.plugin.settings.repos.push({ repo: "", pat: "", defaultLabels: [] });
+          await this.plugin.saveSettings();
+          this.renderList(listEl);
+        }),
+    );
+  }
+
+  private renderList(listEl: HTMLElement): void {
+    listEl.empty();
+
+    if (this.plugin.settings.repos.length === 0) {
+      listEl.createEl("p", {
+        text: "No repositories configured. Add one below.",
+        cls: "setting-item-description",
+      });
+      return;
+    }
+
+    for (let i = 0; i < this.plugin.settings.repos.length; i++) {
+      this.renderEntry(listEl, i);
+    }
+  }
+
+  private renderEntry(listEl: HTMLElement, index: number): void {
+    const entry: RepoEntry = this.plugin.settings.repos[index];
+
+    const save = async () => {
+      await this.plugin.saveSettings();
+    };
+
+    const wrapper = listEl.createDiv();
+    wrapper.style.cssText =
+      "border:1px solid var(--background-modifier-border);border-radius:6px;padding:0.75em;margin-bottom:0.75em;";
+
+    new Setting(wrapper)
+      .setName(`Repository ${index + 1}`)
+      .setDesc('Format: "owner/repo" — e.g. octocat/hello-world')
       .addText((text) =>
         text
-          .setPlaceholder("ghp_...")
-          .setValue(this.plugin.settings.githubPat)
+          .setPlaceholder("owner/repo")
+          .setValue(entry.repo)
           .onChange(async (value) => {
-            this.plugin.settings.githubPat = value.trim();
-            await this.plugin.saveSettings();
+            this.plugin.settings.repos[index].repo = value.trim();
+            await save();
           }),
       )
-      .then((s) => {
-        s.controlEl.querySelector("input")?.setAttribute("type", "password");
+      .addExtraButton((btn) =>
+        btn
+          .setIcon("trash")
+          .setTooltip("Remove")
+          .onClick(async () => {
+            this.plugin.settings.repos.splice(index, 1);
+            await save();
+            this.renderList(listEl);
+          }),
+      );
+
+    new Setting(wrapper)
+      .setName("Personal Access Token")
+      .setDesc("Needs Issues: Read and write permission.")
+      .addText((text) => {
+        text.setPlaceholder("ghp_...").setValue(entry.pat).onChange(async (value) => {
+          this.plugin.settings.repos[index].pat = value.trim();
+          await save();
+        });
+        text.inputEl.setAttribute("type", "password");
+        return text;
       });
 
-    new Setting(containerEl)
-      .setName("Repository Owner")
-      .setDesc("GitHub username or organization name.")
-      .addText((text) =>
-        text
-          .setPlaceholder("octocat")
-          .setValue(this.plugin.settings.repoOwner)
-          .onChange(async (value) => {
-            this.plugin.settings.repoOwner = value.trim();
-            await this.plugin.saveSettings();
-          }),
-      );
-
-    new Setting(containerEl)
-      .setName("Repository Name")
-      .setDesc("Name of the GitHub repository.")
-      .addText((text) =>
-        text
-          .setPlaceholder("my-repo")
-          .setValue(this.plugin.settings.repoName)
-          .onChange(async (value) => {
-            this.plugin.settings.repoName = value.trim();
-            await this.plugin.saveSettings();
-          }),
-      );
-
-    new Setting(containerEl)
+    new Setting(wrapper)
       .setName("Default Labels")
-      .setDesc("Comma-separated labels applied to every created issue.")
+      .setDesc("Comma-separated labels applied to every issue created for this repo.")
       .addText((text) =>
         text
           .setPlaceholder("bug, enhancement")
-          .setValue(this.plugin.settings.defaultLabels.join(", "))
+          .setValue(entry.defaultLabels.join(", "))
           .onChange(async (value) => {
-            this.plugin.settings.defaultLabels = value
+            this.plugin.settings.repos[index].defaultLabels = value
               .split(",")
               .map((l) => l.trim())
               .filter(Boolean);
-            await this.plugin.saveSettings();
+            await save();
           }),
       );
   }

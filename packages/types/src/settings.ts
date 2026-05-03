@@ -1,13 +1,13 @@
-export interface PluginSettings {
-  githubPat: string;
-  repoOwner: string;
-  repoName: string;
+export interface RepoEntry {
+  repo: string;
+  pat: string;
   defaultLabels: string[];
 }
 
+export interface PluginSettings {
+  repos: RepoEntry[];
+}
+
 export const DEFAULT_SETTINGS: PluginSettings = {
-  githubPat: "",
-  repoOwner: "",
-  repoName: "",
-  defaultLabels: [],
+  repos: [],
 };

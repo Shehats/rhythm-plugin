@@ -17,7 +17,6 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@octokit/rest": "^21.0.0",
     "@rhythm-plugin/types": "workspace:*"
   },
   "devDependencies": {

@@ -8,7 +8,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@octokit/rest": "^21.0.0",
     "@rhythm-plugin/canvas-parser": "workspace:*",
     "@rhythm-plugin/github-client": "workspace:*",
     "@rhythm-plugin/md-parser": "workspace:*",
