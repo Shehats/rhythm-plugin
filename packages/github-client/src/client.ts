@@ -64,13 +64,58 @@ export class GitHubClient {
     defaultLabels: string[],
   ): Promise<CreateIssuesReport> {
     const results: IssueCreateResult[] = [];
+    const nodeIdToIssueNumber = new Map<string, number>();
+
     for (const candidate of candidates) {
-      results.push(await this.createIssue(owner, repo, candidate, defaultLabels));
+      const result = await this.createIssue(owner, repo, candidate, defaultLabels);
+      results.push(result);
+      if (result.success && result.issueNumber !== undefined) {
+        nodeIdToIssueNumber.set(candidate.id, result.issueNumber);
+      }
     }
+
+    for (const result of results) {
+      if (!result.success || result.issueNumber === undefined) continue;
+      const nodeIds = result.candidate.blockedByNodeIds;
+      if (!nodeIds?.length) continue;
+      const blockedByNums = nodeIds.flatMap((id) => {
+        const n = nodeIdToIssueNumber.get(id);
+        return n !== undefined ? [n] : [];
+      });
+      if (blockedByNums.length === 0) continue;
+      await this.patchBlockedBy(owner, repo, result.issueNumber, result.candidate, defaultLabels, blockedByNums);
+    }
+
     return {
       results,
       successCount: results.filter((r) => r.success).length,
       failureCount: results.filter((r) => !r.success).length,
     };
+  }
+
+  private async patchBlockedBy(
+    owner: string,
+    repo: string,
+    issueNumber: number,
+    candidate: IssueCandidate,
+    defaultLabels: string[],
+    blockedByNumbers: number[],
+  ): Promise<void> {
+    const { body } = mapCandidateToRequest(candidate, defaultLabels);
+    const blockedBySection = blockedByNumbers.map((n) => `Blocked by #${n}`).join("\n");
+    try {
+      await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${this.pat}`,
+          "Content-Type": "application/json",
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        body: JSON.stringify({ body: `${body}\n\n${blockedBySection}` }),
+      });
+    } catch {
+      // Silently ignore: a patch failure should not abort the overall report
+    }
   }
 }

@@ -70,13 +70,9 @@ export default class RhythmPlugin extends Plugin {
       return;
     }
 
-    if (repos.length === 1) {
-      this.openPreviewModal(repos[0], file, parsed.candidates);
-    } else {
-      new RepoPickerModal(this.app, repos, (entry) => {
-        this.openPreviewModal(entry, file, parsed.candidates);
-      }).open();
-    }
+    new RepoPickerModal(this.app, repos, (entry) => {
+      this.openPreviewModal(entry, file, parsed.candidates);
+    }).open();
   }
 
   private openPreviewModal(

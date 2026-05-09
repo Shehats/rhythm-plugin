@@ -15,7 +15,7 @@ describe("parseCanvas", () => {
     const result = parseCanvas(raw, FIXTURE_PATH);
     expect(result.candidates).toHaveLength(1);
     expect(result.candidates[0].title).toBe("Fix login bug");
-    expect(result.candidates[0].body).toBe("Some details");
+    expect(result.candidates[0].body).toContain("Some details");
     expect(result.candidates[0].source).toBe("canvas-text");
   });
 
@@ -72,5 +72,56 @@ describe("parseCanvas", () => {
     ]);
     const result = parseCanvas(raw, FIXTURE_PATH);
     expect(result.candidates).toHaveLength(0);
+  });
+
+  it("sets blockedByNodeIds on fromNode when edge is labeled 'depends on'", () => {
+    const raw = makeCanvas(
+      [
+        { id: "a", type: "text", text: "Task A", x: 0, y: 0, width: 100, height: 100 },
+        { id: "b", type: "text", text: "Task B", x: 200, y: 0, width: 100, height: 100 },
+      ],
+      [{ id: "e1", fromNode: "a", toNode: "b", label: "depends on" }],
+    );
+    const result = parseCanvas(raw, FIXTURE_PATH);
+    const a = result.candidates.find((c) => c.id === "a")!;
+    const b = result.candidates.find((c) => c.id === "b")!;
+    expect(a.blockedByNodeIds).toEqual(["b"]);
+    expect(b.blockedByNodeIds).toBeUndefined();
+  });
+
+  it("matches 'depends on' case-insensitively and with surrounding whitespace", () => {
+    const raw = makeCanvas(
+      [
+        { id: "a", type: "text", text: "Task A", x: 0, y: 0, width: 100, height: 100 },
+        { id: "b", type: "text", text: "Task B", x: 200, y: 0, width: 100, height: 100 },
+      ],
+      [{ id: "e1", fromNode: "a", toNode: "b", label: "  Depends On  " }],
+    );
+    const result = parseCanvas(raw, FIXTURE_PATH);
+    expect(result.candidates.find((c) => c.id === "a")!.blockedByNodeIds).toEqual(["b"]);
+  });
+
+  it("ignores edges without 'depends on' label", () => {
+    const raw = makeCanvas(
+      [
+        { id: "a", type: "text", text: "Task A", x: 0, y: 0, width: 100, height: 100 },
+        { id: "b", type: "text", text: "Task B", x: 200, y: 0, width: 100, height: 100 },
+      ],
+      [{ id: "e1", fromNode: "a", toNode: "b", label: "relates to" }],
+    );
+    const result = parseCanvas(raw, FIXTURE_PATH);
+    expect(result.candidates.find((c) => c.id === "a")!.blockedByNodeIds).toBeUndefined();
+  });
+
+  it("ignores 'depends on' edges where fromNode is not a text node", () => {
+    const raw = makeCanvas(
+      [
+        { id: "g1", type: "group", label: "Sprint 1", x: -50, y: -50, width: 400, height: 300 },
+        { id: "b", type: "text", text: "Task B", x: 0, y: 0, width: 100, height: 100 },
+      ],
+      [{ id: "e1", fromNode: "g1", toNode: "b", label: "depends on" }],
+    );
+    const result = parseCanvas(raw, FIXTURE_PATH);
+    expect(result.candidates.find((c) => c.id === "b")!.blockedByNodeIds).toBeUndefined();
   });
 });

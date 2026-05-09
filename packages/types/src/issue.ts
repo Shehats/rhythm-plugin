@@ -9,6 +9,7 @@ export interface IssueCandidate {
   sourceFile: string;
   source: IssueSource;
   sourceRef?: string;
+  blockedByNodeIds?: string[];
 }
 
 export interface ParsedFile {

@@ -1,0 +1,86 @@
+{
+  "nodes": [
+    {
+      "id": "g-sprint-1",
+      "type": "group",
+      "label": "Sprint 1",
+      "x": 0,
+      "y": 0,
+      "width": 860,
+      "height": 640
+    },
+    {
+      "id": "t1",
+      "type": "text",
+      "text": "Set up user authentication\n\nImplement login and registration flows using JWT tokens.\n\n- POST /auth/login → returns access + refresh token\n- POST /auth/register → creates user, sends verification email\n- POST /auth/refresh → rotates tokens",
+      "x": 40,
+      "y": 60,
+      "width": 360,
+      "height": 220
+    },
+    {
+      "id": "t2",
+      "type": "text",
+      "text": "Build password reset flow\n\nAllow users to reset their password via email link.\n\nAcceptance: user receives a reset email within 60 seconds\nAcceptance: reset link expires after 1 hour\nAcceptance: using the link invalidates all existing sessions",
+      "x": 460,
+      "y": 60,
+      "width": 360,
+      "height": 220
+    },
+    {
+      "id": "t3",
+      "type": "text",
+      "text": "Add OAuth login (GitHub + Google)\n\nAllow users to sign in with their existing GitHub or Google accounts.\n\n- Redirect to provider → exchange code → upsert user record\n- Link OAuth identity to existing email account when matched",
+      "x": 40,
+      "y": 340,
+      "width": 360,
+      "height": 220
+    },
+    {
+      "id": "g-sprint-2",
+      "type": "group",
+      "label": "Sprint 2",
+      "x": 0,
+      "y": 700,
+      "width": 860,
+      "height": 440
+    },
+    {
+      "id": "t4",
+      "type": "text",
+      "text": "Design dashboard home screen\n\nCreate the main dashboard layout shown after login.\n\n- Widget grid with drag-and-drop reordering\n- Persistent layout saved per user\n- Empty state when no widgets are added",
+      "x": 40,
+      "y": 760,
+      "width": 360,
+      "height": 220
+    },
+    {
+      "id": "t5",
+      "type": "text",
+      "text": "Implement activity feed widget\n\nShow a chronological list of recent events on the dashboard.\n\nAcceptance: feed loads in under 500 ms\nAcceptance: new events appear without a full page reload\nAcceptance: user can mark individual events as read",
+      "x": 460,
+      "y": 760,
+      "width": 360,
+      "height": 220
+    },
+    {
+      "id": "t6",
+      "type": "text",
+      "text": "Explore push notification support\n\nInvestigate Web Push API and service-worker requirements.\n\n- Compare browser support matrix\n- Prototype opt-in permission flow\n- Estimate backend changes needed",
+      "x": 940,
+      "y": 60,
+      "width": 360,
+      "height": 220
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "t1",
+      "toNode": "t2",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "depends on"
+    }
+  ]
+}

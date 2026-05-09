@@ -6,7 +6,9 @@
     "build:plugin": "pnpm --filter obsidian-plugin run build",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
-    "type-check": "pnpm -r run type-check"
+    "type-check": "pnpm -r run type-check",
+    "install:plugin": "if [ -z \"$VAULT\" ]; then echo 'Error: VAULT env variable is not set' >&2; exit 1; fi && mkdir -p \"$VAULT/.obsidian/plugins/rhythm-plugin\" && cp packages/obsidian-plugin/dist/main.js packages/obsidian-plugin/manifest.json \"$VAULT/.obsidian/plugins/rhythm-plugin/\"",
+    "deploy:plugin": "pnpm build:plugin && pnpm install:plugin"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
